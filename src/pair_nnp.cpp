@@ -207,7 +207,7 @@ PairNNP::PairNNP(LAMMPS *lmp)
     error->all(FLERR,"Pair deepmd requires metal unit, please set it by \"units metal\"");
   }
   restartinfo = 0;
-  centroidstressflag = 4 ;
+  centroidstressflag = 2 ;
   pppmflag = 1;
   respa_enable = 0;
   writedata = 0;
@@ -395,6 +395,15 @@ void PairNNP::compute(int eflag, int vflag)
             cvatom[ii][6] += 1.0 * dvatom[9*ii+1]; // yx
             cvatom[ii][7] += 1.0 * dvatom[9*ii+2]; // zx
             cvatom[ii][8] += 1.0 * dvatom[9*ii+5]; // zy
+            //cvatom[ii][0] += 1.0 * dvatom[9*ii+0]; // xx
+            //cvatom[ii][1] += 1.0 * dvatom[9*ii+4]; // yy 
+            //cvatom[ii][2] += 1.0 * dvatom[9*ii+8]; // zz
+            //cvatom[ii][3] += 1.0 * dvatom[9*ii+1]; // xy +3]; // xy
+            //cvatom[ii][4] += 1.0 * dvatom[9*ii+2]; // xz 6]; // xz
+            //cvatom[ii][5] += 1.0 * dvatom[9*ii+5]; // yz 7]; // yz
+            //cvatom[ii][6] += 1.0 * dvatom[9*ii+3]; // yx 1]; // yx
+            //cvatom[ii][7] += 1.0 * dvatom[9*ii+6]; // zx 2]; // zx
+            //cvatom[ii][8] += 1.0 * dvatom[9*ii+7]; // zy 5]; // zy
 	  }
 	}
       }
@@ -477,6 +486,15 @@ void PairNNP::compute(int eflag, int vflag)
             cvatom[ii][6] += 1.0 * dvatom[9*ii+1]; // yx
             cvatom[ii][7] += 1.0 * dvatom[9*ii+2]; // zx
             cvatom[ii][8] += 1.0 * dvatom[9*ii+5]; // zy
+            //cvatom[ii][0] += 1.0 * dvatom[9*ii+0]; // xx
+            //cvatom[ii][1] += 1.0 * dvatom[9*ii+4]; // yy 
+            //cvatom[ii][2] += 1.0 * dvatom[9*ii+8]; // zz
+            //cvatom[ii][3] += 1.0 * dvatom[9*ii+1]; // xy +3]; // xy
+            //cvatom[ii][4] += 1.0 * dvatom[9*ii+2]; // xz 6]; // xz
+            //cvatom[ii][5] += 1.0 * dvatom[9*ii+5]; // yz 7]; // yz
+            //cvatom[ii][6] += 1.0 * dvatom[9*ii+3]; // yx 1]; // yx
+            //cvatom[ii][7] += 1.0 * dvatom[9*ii+6]; // zx 2]; // zx
+            //cvatom[ii][8] += 1.0 * dvatom[9*ii+7]; // zy 5]; // zy
 	}
       }      
       if (out_freq > 0 && update->ntimestep % out_freq == 0) {

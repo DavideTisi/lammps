@@ -18,6 +18,7 @@
 
 #include "compute_heat_flux.h"
 
+#include <iostream>
 #include <cstring>
 #include "atom.h"
 #include "update.h"
@@ -140,6 +141,8 @@ void ComputeHeatFlux::compute_vector()
 
   // heat flux via centroid atomic stress
   if (c_stress->pressatomflag == 2) {
+    std::cout<<"calcolo heat flux via centroid atomic stress :"<<std::endl;
+    std::cout<<"c_stress->pressatomflag "<<c_stress->pressatomflag <<std::endl;
     for (int i = 0; i < nlocal; i++) {
       if (mask[i] & groupbit) {
         eng = pe[i] + ke[i];
@@ -186,9 +189,9 @@ void ComputeHeatFlux::compute_vector()
   // convert jv from stress*volume to energy units via nktv2p factor
 
   double nktv2p = force->nktv2p;
-  jv[0] /= nktv2p;
-  jv[1] /= nktv2p;
-  jv[2] /= nktv2p;
+//  jv[0] /= nktv2p;
+//  jv[1] /= nktv2p;
+//  jv[2] /= nktv2p;
 
   // sum across all procs
   // 1st 3 terms are total heat flux
