@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string.h>
 #include <iomanip>
 #include <limits>
@@ -202,12 +203,11 @@ PairNNP::PairNNP(LAMMPS *lmp)
     : Pair(lmp)
       
 {
-  if (lmp->citeme) lmp->citeme->add(cite_user_deepmd_package);
+  //if (lmp->citeme) lmp->citeme->add(cite_user_deepmd_package);
   if (strcmp(update->unit_style,"metal") != 0) {
     error->all(FLERR,"Pair deepmd requires metal unit, please set it by \"units metal\"");
   }
-  restartinfo = 0;
-  centroidstressflag = 2 ;
+  restartinfo = 0 ;
   pppmflag = 1;
   respa_enable = 0;
   writedata = 0;
@@ -258,12 +258,43 @@ PairNNP::~PairNNP()
   }
 }
 
+void PairNNP::ev_setup_vatomc( int vflag, int alloc)
+{
+   int i,n; 
+   int vflag_atomc = vflag / 4;
+   
+   if (vflag_atomc && atom->nmax > maxvatomc) {
+       maxvatomc = atom->nmax;
+       if (alloc) {
+       memory->destroy(vatom);
+//       memory->create(vatom,comm->nthreads*maxvatomc,9,"pair:vatom"); ERAQUI
+       } 
+       memory->create(vatom,comm->nthreads*maxvatomc,9,"pair:vatom");
+    }
+    
+    if (vflag_atomc && alloc) {
+       n = atom->nlocal;
+       if (force->newton) n += atom->nghost;
+       for (i = 0; i < n; i++) {
+          vatom[i][0] = 0.0;
+          vatom[i][1] = 0.0;
+          vatom[i][2] = 0.0;
+          vatom[i][3] = 0.0;
+          vatom[i][4] = 0.0;
+          vatom[i][5] = 0.0;
+          vatom[i][6] = 0.0;
+          vatom[i][7] = 0.0;
+          vatom[i][8] = 0.0;
+
+       }
+    }
+}
+
 void PairNNP::compute(int eflag, int vflag)
 {
   if (numb_models == 0) return;
-  cout<<"inside PairNNP"<<endl;
-  cout<<"eflag , vflag"<<eflag <<" "<<vflag<<endl;
   if (eflag || vflag) ev_setup(eflag,vflag);
+  if (vflag) ev_setup_vatomc( vflag);
   bool do_ghost = true;
   
   double **x = atom->x;
@@ -386,207 +417,33 @@ void PairNNP::compute(int eflag, int vflag)
 	    //vatom[ii][3] += 1.0 * dvatom[9*ii+3];
 	    //vatom[ii][4] += 1.0 * dvatom[9*ii+6];
 	    //vatom[ii][5] += 1.0 * dvatom[9*ii+7];
-            cvatom[ii][0] += -1.0 * dvatom[9*ii+0]; // xx
-            cvatom[ii][1] += -1.0 * dvatom[9*ii+4]; // yy 
-            cvatom[ii][2] += -1.0 * dvatom[9*ii+8]; // zz
-            cvatom[ii][3] += -1.0 * dvatom[9*ii+3]; // xy
-            cvatom[ii][4] += -1.0 * dvatom[9*ii+6]; // xz
-            cvatom[ii][5] += -1.0 * dvatom[9*ii+7]; // yz
-            cvatom[ii][6] += -1.0 * dvatom[9*ii+1]; // yx
-            cvatom[ii][7] += -1.0 * dvatom[9*ii+2]; // zx
-            cvatom[ii][8] += -1.0 * dvatom[9*ii+5]; // zy
-            //cvatom[ii][0] += 1.0 * dvatom[9*ii+0]; // xx
-            //cvatom[ii][1] += 1.0 * dvatom[9*ii+4]; // yy 
-            //cvatom[ii][2] += 1.0 * dvatom[9*ii+8]; // zz
-            //cvatom[ii][3] += 1.0 * dvatom[9*ii+1]; // xy +3]; // xy
-            //cvatom[ii][4] += 1.0 * dvatom[9*ii+2]; // xz 6]; // xz
-            //cvatom[ii][5] += 1.0 * dvatom[9*ii+5]; // yz 7]; // yz
-            //cvatom[ii][6] += 1.0 * dvatom[9*ii+3]; // yx 1]; // yx
-            //cvatom[ii][7] += 1.0 * dvatom[9*ii+6]; // zx 2]; // zx
-            //cvatom[ii][8] += 1.0 * dvatom[9*ii+7]; // zy 5]; // zy
+	    //vatom[ii][0] = -1.0 * dvatom[9*ii+0];
+	    //vatom[ii][1] = -1.0 * dvatom[9*ii+1];
+	    //vatom[ii][2] = -1.0 * dvatom[9*ii+2];
+	    //vatom[ii][3] = -1.0 * dvatom[9*ii+3];
+	    //vatom[ii][4] = -1.0 * dvatom[9*ii+4];
+	    //vatom[ii][5] = -1.0 * dvatom[9*ii+5];
+	    //vatom[ii][6] = -1.0 * dvatom[9*ii+6];
+	    //vatom[ii][7] = -1.0 * dvatom[9*ii+7];
+	    //vatom[ii][8] = -1.0 * dvatom[9*ii+8];
+	    vatom[ii][0] += 1.0 * dvatom[9*ii+0]; // xx
+	    vatom[ii][1] += 1.0 * dvatom[9*ii+4]; // yy 
+	    vatom[ii][2] += 1.0 * dvatom[9*ii+8]; // zz
+	    vatom[ii][3] += 1.0 * dvatom[9*ii+3]; // xy
+	    vatom[ii][4] += 1.0 * dvatom[9*ii+6]; // xz
+	    vatom[ii][5] += 1.0 * dvatom[9*ii+7]; // yz
+	    vatom[ii][6] += 1.0 * dvatom[9*ii+1]; // yx
+	    vatom[ii][7] += 1.0 * dvatom[9*ii+2]; // zx
+	    vatom[ii][8] += 1.0 * dvatom[9*ii+5]; // zy
 	  }
-	}
+	  if (newton_pair) {
+	    comm->reverse_comm_pair(this);
+	  }
+	} //end if(vflag)
       }
     }
     else if (multi_models_mod_devi) {
-      vector<double > deatom (nall * 1, 0);
-      vector<double > dvatom (nall * 9, 0);
-#ifdef HIGH_PREC
-      vector<double> 		all_energy;
-      vector<vector<double>> 	all_virial;	       
-      vector<vector<double>> 	all_atom_energy;
-      vector<vector<double>> 	all_atom_virial;
-      nnp_inter_model_devi.compute(all_energy, all_force, all_virial, all_atom_energy, all_atom_virial, dcoord, dtype, dbox, nghost, lmp_list, ago, fparam, daparam);
-      // nnp_inter_model_devi.compute_avg (dener, all_energy);
-      // nnp_inter_model_devi.compute_avg (dforce, all_force);
-      // nnp_inter_model_devi.compute_avg (dvirial, all_virial);
-      // nnp_inter_model_devi.compute_avg (deatom, all_atom_energy);
-      // nnp_inter_model_devi.compute_avg (dvatom, all_atom_virial);
-      dener = all_energy[0];
-      dforce = all_force[0];
-      dvirial = all_virial[0];
-      deatom = all_atom_energy[0];
-      dvatom = all_atom_virial[0];
-#else 
-      vector<float> dcoord_(dcoord.size());
-      vector<float> dbox_(dbox.size());
-      for (unsigned dd = 0; dd < dcoord.size(); ++dd) dcoord_[dd] = dcoord[dd];
-      for (unsigned dd = 0; dd < dbox.size(); ++dd) dbox_[dd] = dbox[dd];
-      vector<float> dforce_(dforce.size(), 0);
-      vector<float> dvirial_(dvirial.size(), 0);
-      vector<float> deatom_(dforce.size(), 0);
-      vector<float> dvatom_(dforce.size(), 0);
-      double dener_ = 0;
-      vector<double> 		all_energy_;
-      vector<vector<float>>	all_force_;
-      vector<vector<float>> 	all_virial_;	       
-      vector<vector<float>> 	all_atom_energy_;
-      vector<vector<float>> 	all_atom_virial_;
-      nnp_inter_model_devi.compute(all_energy_, all_force_, all_virial_, all_atom_energy_, all_atom_virial_, dcoord_, dtype, dbox_, nghost, lmp_list, ago, fparam, daparam);
-      // nnp_inter_model_devi.compute_avg (dener_, all_energy_);
-      // nnp_inter_model_devi.compute_avg (dforce_, all_force_);
-      // nnp_inter_model_devi.compute_avg (dvirial_, all_virial_);
-      // nnp_inter_model_devi.compute_avg (deatom_, all_atom_energy_);
-      // nnp_inter_model_devi.compute_avg (dvatom_, all_atom_virial_);
-      dener_ = all_energy_[0];
-      dforce_ = all_force_[0];
-      dvirial_ = all_virial_[0];
-      deatom_ = all_atom_energy_[0];
-      dvatom_ = all_atom_virial_[0];
-      dener = dener_;
-      for (unsigned dd = 0; dd < dforce.size(); ++dd) dforce[dd] = dforce_[dd];	
-      for (unsigned dd = 0; dd < dvirial.size(); ++dd) dvirial[dd] = dvirial_[dd];	
-      for (unsigned dd = 0; dd < deatom.size(); ++dd) deatom[dd] = deatom_[dd];	
-      for (unsigned dd = 0; dd < dvatom.size(); ++dd) dvatom[dd] = dvatom_[dd];	
-      all_force.resize(all_force_.size());
-      for (unsigned ii = 0; ii < all_force_.size(); ++ii){
-	all_force[ii].resize(all_force_[ii].size());
-	for (unsigned jj = 0; jj < all_force_[ii].size(); ++jj){
-	  all_force[ii][jj] = all_force_[ii][jj];
-	}
-      }
-#endif
-      if (eflag_atom) {
-	for (int ii = 0; ii < nlocal; ++ii) eatom[ii] += deatom[ii];
-      }
-      if (vflag_atom) {
-	for (int ii = 0; ii < nall; ++ii){
-	 // vatom[ii][0] += 1.0 * dvatom[9*ii+0];
-	 // vatom[ii][1] += 1.0 * dvatom[9*ii+4];
-	 // vatom[ii][2] += 1.0 * dvatom[9*ii+8];
-	 // vatom[ii][3] += 1.0 * dvatom[9*ii+3];
-	 // vatom[ii][4] += 1.0 * dvatom[9*ii+6];
-	 // vatom[ii][5] += 1.0 * dvatom[9*ii+7];
-            cvatom[ii][0] += -1.0 * dvatom[9*ii+0]; // xx
-            cvatom[ii][1] += -1.0 * dvatom[9*ii+4]; // yy 
-            cvatom[ii][2] += -1.0 * dvatom[9*ii+8]; // zz
-            cvatom[ii][3] += -1.0 * dvatom[9*ii+3]; // xy
-            cvatom[ii][4] += -1.0 * dvatom[9*ii+6]; // xz
-            cvatom[ii][5] += -1.0 * dvatom[9*ii+7]; // yz
-            cvatom[ii][6] += -1.0 * dvatom[9*ii+1]; // yx
-            cvatom[ii][7] += -1.0 * dvatom[9*ii+2]; // zx
-            cvatom[ii][8] += -1.0 * dvatom[9*ii+5]; // zy
-            //cvatom[ii][0] += 1.0 * dvatom[9*ii+0]; // xx
-            //cvatom[ii][1] += 1.0 * dvatom[9*ii+4]; // yy 
-            //cvatom[ii][2] += 1.0 * dvatom[9*ii+8]; // zz
-            //cvatom[ii][3] += 1.0 * dvatom[9*ii+1]; // xy +3]; // xy
-            //cvatom[ii][4] += 1.0 * dvatom[9*ii+2]; // xz 6]; // xz
-            //cvatom[ii][5] += 1.0 * dvatom[9*ii+5]; // yz 7]; // yz
-            //cvatom[ii][6] += 1.0 * dvatom[9*ii+3]; // yx 1]; // yx
-            //cvatom[ii][7] += 1.0 * dvatom[9*ii+6]; // zx 2]; // zx
-            //cvatom[ii][8] += 1.0 * dvatom[9*ii+7]; // zy 5]; // zy
-	}
-      }      
-      if (out_freq > 0 && update->ntimestep % out_freq == 0) {
-	int rank = comm->me;
-	// std force 
-	if (newton_pair) {
-	  comm->reverse_comm_pair(this);
-	}
-	vector<double> std_f;
-#ifdef HIGH_PREC
-	vector<double> tmp_avg_f;
-	nnp_inter_model_devi.compute_avg (tmp_avg_f, all_force);  
-	nnp_inter_model_devi.compute_std_f (std_f, tmp_avg_f, all_force);
-	if (out_rel == 1){
-	    nnp_inter_model_devi.compute_relative_std_f (std_f, tmp_avg_f, eps);
-	}
-#else 
-	vector<float> tmp_avg_f_, std_f_;
-	for (unsigned ii = 0; ii < all_force_.size(); ++ii){
-	  for (unsigned jj = 0; jj < all_force_[ii].size(); ++jj){
-	    all_force_[ii][jj] = all_force[ii][jj];
-	  }
-	}
-	nnp_inter_model_devi.compute_avg (tmp_avg_f_, all_force_);  
-	nnp_inter_model_devi.compute_std_f (std_f_, tmp_avg_f_, all_force_);
-	std_f.resize(std_f_.size());
-	if (out_rel == 1){
-	    nnp_inter_model_devi.compute_relative_std_f (std_f_, tmp_avg_f_, eps);
-	}
-	for (int dd = 0; dd < std_f_.size(); ++dd) std_f[dd] = std_f_[dd];
-#endif
-	double min = numeric_limits<double>::max(), max = 0, avg = 0;
-	ana_st(max, min, avg, std_f, nlocal);
-	int all_nlocal = 0;
-	MPI_Reduce (&nlocal, &all_nlocal, 1, MPI_INT, MPI_SUM, 0, world);
-	double all_f_min = 0, all_f_max = 0, all_f_avg = 0;
-	MPI_Reduce (&min, &all_f_min, 1, MPI_DOUBLE, MPI_MIN, 0, world);
-	MPI_Reduce (&max, &all_f_max, 1, MPI_DOUBLE, MPI_MAX, 0, world);
-	MPI_Reduce (&avg, &all_f_avg, 1, MPI_DOUBLE, MPI_SUM, 0, world);
-	all_f_avg /= double(all_nlocal);
-	// std energy
-	vector<double > std_e;
-#ifdef HIGH_PREC
-	vector<double > tmp_avg_e;
-	nnp_inter_model_devi.compute_avg (tmp_avg_e, all_atom_energy);
-	nnp_inter_model_devi.compute_std_e (std_e, tmp_avg_e, all_atom_energy);
-#else 
-	vector<float> tmp_avg_e_, std_e_;
-	nnp_inter_model_devi.compute_avg (tmp_avg_e_, all_atom_energy_);
-	nnp_inter_model_devi.compute_std_e (std_e_, tmp_avg_e_, all_atom_energy_);
-	std_e.resize(std_e_.size());
-	for (int dd = 0; dd < std_e_.size(); ++dd) std_e[dd] = std_e_[dd];
-#endif	
-	max = avg = 0;
-	min = numeric_limits<double>::max();
-	ana_st(max, min, avg, std_e, nlocal);
-	double all_e_min = 0, all_e_max = 0, all_e_avg = 0;
-	MPI_Reduce (&min, &all_e_min, 1, MPI_DOUBLE, MPI_MIN, 0, world);
-	MPI_Reduce (&max, &all_e_max, 1, MPI_DOUBLE, MPI_MAX, 0, world);
-	MPI_Reduce (&avg, &all_e_avg, 1, MPI_DOUBLE, MPI_SUM, 0, world);
-	all_e_avg /= double(all_nlocal);
-	// // total e
-	// vector<double > sum_e(numb_models, 0.);
-	// MPI_Reduce (&all_energy[0], &sum_e[0], numb_models, MPI_DOUBLE, MPI_SUM, 0, world);
-	if (rank == 0) {
-	  // double avg_e = 0;
-	  // nnp_inter_model_devi.compute_avg(avg_e, sum_e);
-	  // double std_e_1 = 0;
-	  // nnp_inter_model_devi.compute_std(std_e_1, avg_e, sum_e);	
-	  fp << setw(12) << update->ntimestep 
-	     << " " << setw(18) << all_e_max 
-	     << " " << setw(18) << all_e_min
-	     << " " << setw(18) << all_e_avg
-	     << " " << setw(18) << all_f_max 
-	     << " " << setw(18) << all_f_min
-	     << " " << setw(18) << all_f_avg;
-	     // << " " << setw(18) << avg_e
-	     // << " " << setw(18) << std_e_1 / all_nlocal
-	  if (out_each == 1){
-	      // TODO: Fix two problems:
-	      // 1. If the atom_style is not atomic (e.g. charge), the order of std_f is different from that of atom ids.
-              // 2. std_f is not gathered by MPI.
-	      for (int dd = 0; dd < all_nlocal; ++dd) {
-            fp << " " << setw(18) << std_f[dd];	
-        }
-	  }
-	  fp << endl;
-	}
-      }
-    }
-    else {
-      error->all(FLERR,"unknown computational branch");
+      error->all(FLERR," does not support model devi");
     }
   }
   else {
@@ -856,8 +713,8 @@ void PairNNP::coeff(int narg, char **arg)
   ihi = n;
   jhi = n;
   if (narg == 2) {
-    utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
-    utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
+    force->bounds(FLERR,arg[0],atom->ntypes,ilo,ihi);
+    force->bounds(FLERR,arg[1],atom->ntypes,jlo,jhi);
     if (ilo != 1 || jlo != 1 || ihi != n || jhi != n) {
       error->all(FLERR,"deepmd requires that the scale should be set to all atom types, i.e. pair_coeff * *.");
     }
@@ -905,15 +762,18 @@ double PairNNP::init_one(int i, int j)
 int PairNNP::pack_reverse_comm(int n, int first, double *buf)
 {
   int i,m,last;
-
   m = 0;
   last = first + n;
   for (i = first; i < last; i++) {
-    for (int dd = 0; dd < numb_models; ++dd){
-      buf[m++] = all_force[dd][3*i+0];
-      buf[m++] = all_force[dd][3*i+1];
-      buf[m++] = all_force[dd][3*i+2];
-    }
+      buf[m++] = vatom[i][0];
+      buf[m++] = vatom[i][1];
+      buf[m++] = vatom[i][2];
+      buf[m++] = vatom[i][3];
+      buf[m++] = vatom[i][4];
+      buf[m++] = vatom[i][5];
+      buf[m++] = vatom[i][6];
+      buf[m++] = vatom[i][7];
+      buf[m++] = vatom[i][8];
   }
   return m;
 }
@@ -927,11 +787,15 @@ void PairNNP::unpack_reverse_comm(int n, int *list, double *buf)
   m = 0;
   for (i = 0; i < n; i++) {
     j = list[i];
-    for (int dd = 0; dd < numb_models; ++dd){
-      all_force[dd][3*j+0] += buf[m++];
-      all_force[dd][3*j+1] += buf[m++];
-      all_force[dd][3*j+2] += buf[m++];
-    }
+      vatom[j][0] += buf[m++];
+      vatom[j][1] += buf[m++];
+      vatom[j][2] += buf[m++];
+      vatom[j][3] += buf[m++];
+      vatom[j][4] += buf[m++];
+      vatom[j][5] += buf[m++];
+      vatom[j][6] += buf[m++];
+      vatom[j][7] += buf[m++];
+      vatom[j][8] += buf[m++];
   }
 }
 
