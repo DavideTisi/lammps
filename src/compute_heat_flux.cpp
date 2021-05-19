@@ -189,9 +189,9 @@ void ComputeHeatFlux::compute_vector()
   // convert jv from stress*volume to energy units via nktv2p factor
 
   double nktv2p = force->nktv2p;
-//  jv[0] /= nktv2p;
-//  jv[1] /= nktv2p;
-//  jv[2] /= nktv2p;
+  jv[0] /= nktv2p;
+  jv[1] /= nktv2p;
+  jv[2] /= nktv2p;
 
   // sum across all procs
   // 1st 3 terms are total heat flux
