@@ -261,8 +261,6 @@ PairNNP::~PairNNP()
 void PairNNP::compute(int eflag, int vflag)
 {
   if (numb_models == 0) return;
-  cout<<"inside PairNNP"<<endl;
-  cout<<"eflag , vflag"<<eflag <<" "<<vflag<<endl;
   if (eflag || vflag) ev_setup(eflag,vflag);
   bool do_ghost = true;
   
@@ -335,7 +333,7 @@ void PairNNP::compute(int eflag, int vflag)
   if (do_ghost) {
     LammpsNeighborList lmp_list (list->inum, list->ilist, list->numneigh, list->firstneigh);
     if (single_model || multi_models_no_mod_devi) {
-      if ( ! (eflag_atom || vflag_atom) ) {      
+      if ( ! (eflag_atom || cvflag_atom) ) {      
 #ifdef HIGH_PREC
 	nnp_inter.compute (dener, dforce, dvirial, dcoord, dtype, dbox, nghost, lmp_list, ago, fparam, daparam);
 #else
@@ -369,6 +367,7 @@ void PairNNP::compute(int eflag, int vflag)
 	vector<float> dvatom_(dforce.size(), 0);
 	double dener_ = 0;
 	nnp_inter.compute (dener_, dforce_, dvirial_, deatom_, dvatom_, dcoord_, dtype, dbox_, nghost, lmp_list, ago, fparam, daparam);
+
 	for (unsigned dd = 0; dd < dforce.size(); ++dd) dforce[dd] = dforce_[dd];	
 	for (unsigned dd = 0; dd < dvirial.size(); ++dd) dvirial[dd] = dvirial_[dd];	
 	for (unsigned dd = 0; dd < deatom.size(); ++dd) deatom[dd] = deatom_[dd];	
@@ -378,7 +377,7 @@ void PairNNP::compute(int eflag, int vflag)
 	if (eflag_atom) {
 	  for (int ii = 0; ii < nlocal; ++ii) eatom[ii] += deatom[ii];
 	}
-	if (vflag_atom) {
+	if (cvflag_atom) {
 	  for (int ii = 0; ii < nall; ++ii){
 	    //vatom[ii][0] += 1.0 * dvatom[9*ii+0];
 	    //vatom[ii][1] += 1.0 * dvatom[9*ii+4];
@@ -469,7 +468,7 @@ void PairNNP::compute(int eflag, int vflag)
       if (eflag_atom) {
 	for (int ii = 0; ii < nlocal; ++ii) eatom[ii] += deatom[ii];
       }
-      if (vflag_atom) {
+      if (cvflag_atom) {
 	for (int ii = 0; ii < nall; ++ii){
 	 // vatom[ii][0] += 1.0 * dvatom[9*ii+0];
 	 // vatom[ii][1] += 1.0 * dvatom[9*ii+4];

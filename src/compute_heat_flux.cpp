@@ -141,8 +141,6 @@ void ComputeHeatFlux::compute_vector()
 
   // heat flux via centroid atomic stress
   if (c_stress->pressatomflag == 2) {
-    std::cout<<"calcolo heat flux via centroid atomic stress :"<<std::endl;
-    std::cout<<"c_stress->pressatomflag "<<c_stress->pressatomflag <<std::endl;
     for (int i = 0; i < nlocal; i++) {
       if (mask[i] & groupbit) {
         eng = pe[i] + ke[i];

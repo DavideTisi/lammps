@@ -128,7 +128,6 @@ void ComputeCentroidStressAtom::init()
   // check if pair styles support centroid atom stress
   if (pairflag && force->pair){
     if (force->pair->centroidstressflag & 4){
-      std::cout<<"centroidstressflag "<<force->pair->centroidstressflag <<std::endl ;
       error->all(FLERR, "Pair style does not support compute centroid/stress/atom");
     }
   }
@@ -183,7 +182,6 @@ void ComputeCentroidStressAtom::compute_peratom()
   // many-body pair styles not yet implemented
   if (pairflag && force->pair && force->pair->compute_flag) {
     if (force->pair->centroidstressflag & 2) {
-      std::cout<<"metto cvatom dentro stress "<<force->pair->centroidstressflag <<std::endl ;
       double **cvatom = force->pair->cvatom;
       for (i = 0; i < npair; i++)
         for (j = 0; j < 9; j++)

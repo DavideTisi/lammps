@@ -793,10 +793,6 @@ void Pair::ev_setup(int eflag, int vflag, int alloc)
   vflag_global = vflag % 4;
   vflag_atom = vflag & 4;
   cvflag_atom = 0;
-  //std::cout<<"vflag "<<vflag <<std::endl;
-  //std::cout<<"vflag & 8 "<<vflag & 8 <<std::endl;
-  //std::cout<<"centroidstressflag "<<centroidstressflag <<std::endl;
-  //std::cout<<"vflag_atom "<<vflag_atom <<std::endl;
   if (vflag & 8) {
     if (centroidstressflag & 2) {
       cvflag_atom = 1;
